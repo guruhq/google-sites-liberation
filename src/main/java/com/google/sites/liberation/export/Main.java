@@ -72,6 +72,8 @@ public class Main {
   @Option(name="-h", usage="host")
   private String host = "sites.google.com";
   
+  @Option(name="-b", usage="s3bucket", required=true)
+  private String s3Bucket;
   
   /**
    * Be sure to specify the name of your application. If the application name is {@code null} or
@@ -150,7 +152,7 @@ public class Main {
 	  sitesService.setOAuth2Credentials(credential);
       
       siteExporter.exportSite(host, domain, webspace, exportRevisions,
-          sitesService, directory, new StdOutProgressListener());
+          sitesService, directory, new StdOutProgressListener(), s3Bucket);
     } catch (CmdLineException e) {
       LOGGER.log(Level.SEVERE, e.getMessage());
       parser.printUsage(System.err);

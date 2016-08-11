@@ -16,11 +16,10 @@
 
 package com.google.sites.liberation.export;
 
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.gdata.client.sites.SitesService;
 import com.google.gdata.data.sites.AttachmentEntry;
 import com.google.inject.ImplementedBy;
-
-import java.io.File;
 
 /**
  * Downloads attachments to a file.
@@ -34,5 +33,5 @@ interface AttachmentDownloader {
    * Downloads the given attachment to the given file name, using the given
    * SitesService.
    */
-  void download(AttachmentEntry attachment, File file, SitesService sitesService);
+  void download(AttachmentEntry attachment, String s3Bucket, AmazonS3Client s3Client, String s3Key, SitesService sitesService);
 }

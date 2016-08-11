@@ -18,20 +18,21 @@ package com.google.sites.liberation.export;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.google.gdata.client.sites.SitesService;
+import com.google.gdata.data.DateTime;
 import com.google.gdata.data.MediaContent;
 import com.google.gdata.data.OutOfLineContent;
 import com.google.gdata.data.media.MediaSource;
 import com.google.gdata.data.sites.AttachmentEntry;
 import com.google.gdata.util.ServiceException;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Implements {@link AttachmentDownloader} to download an attachment
@@ -48,23 +49,26 @@ final class AttachmentDownloaderImpl implements AttachmentDownloader {
    * Downloads the given attachment to the given file name.
    */
   @Override
-  public void download(AttachmentEntry attachment, File file, 
-      SitesService sitesService) {
+  public void download(AttachmentEntry attachment, String s3Bucket,
+      AmazonS3Client s3Client, String s3Key, SitesService sitesService) {
     checkNotNull(attachment);
-    checkNotNull(file);
+    checkNotNull(s3Bucket);
+    checkNotNull(s3Key);
     MediaContent mediaContent = new MediaContent();
     mediaContent.setUri(((OutOfLineContent) attachment.getContent()).getUri());
     try {
       MediaSource mediaSource = sitesService.getMedia(mediaContent);
       InputStream inStream = mediaSource.getInputStream();
-      OutputStream outStream = new FileOutputStream(file);
-      byte[] buf = new byte[4*1024];
-      int bytesRead;
-      while((bytesRead = inStream.read(buf)) != -1) {
-        outStream.write(buf, 0, bytesRead);
-      }
+      
+      ObjectMetadata metadata = new ObjectMetadata();
+      metadata.setContentLength(mediaSource.getContentLength());
+      metadata.setContentType(mediaSource.getContentType());
+      DateTime dt = mediaSource.getLastModified();
+      metadata.setLastModified(new Date(dt.getValue()));
+      
+      s3Client.putObject(s3Bucket, s3Key, inStream, metadata);
+      
       inStream.close();
-      outStream.close();
     } catch (IOException e) {
       LOGGER.log(Level.WARNING, "Error downloading attachment: " 
           + attachment.getTitle().getPlainText(), e);

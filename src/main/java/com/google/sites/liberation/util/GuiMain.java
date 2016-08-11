@@ -24,7 +24,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -337,7 +336,7 @@ public class GuiMain {
         Injector injector = Guice.createInjector(new SiteExporterModule());
         SiteExporter siteExporter = injector.getInstance(SiteExporter.class);
         siteExporter.exportSite(host, domain, webspace, revisions,
-            sitesService, directory, new GuiProgressListener(progressBar, textArea));
+            sitesService, directory, new GuiProgressListener(progressBar, textArea), null);
       } else {
         Injector injector = Guice.createInjector(new SiteImporterModule());
         SiteImporter siteImporter = injector.getInstance(SiteImporter.class);

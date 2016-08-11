@@ -44,5 +44,5 @@ public interface SiteExporter {
    */
   void exportSite(String host, @Nullable String domain, String webspace, 
       boolean exportRevisions, SitesService sitesService, File rootDirectory, 
-      ProgressListener progressListener);
+      ProgressListener progressListener, String s3Bucket);
 }

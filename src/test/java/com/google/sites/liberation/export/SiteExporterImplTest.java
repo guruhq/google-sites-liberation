@@ -18,6 +18,7 @@ package com.google.sites.liberation.export;
 
 import static org.junit.Assert.*;
 
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gdata.client.sites.SitesService;
@@ -68,7 +69,7 @@ public class SiteExporterImplTest {
   private SitesService sitesService;
   private Collection<BaseContentEntry<?>> entries;
   private URL feedUrl;
-  private Map<AttachmentEntry, File> downloaded;
+  private Map<AttachmentEntry, String> downloaded;
   
   @Before
   public void before() throws MalformedURLException {
@@ -274,7 +275,7 @@ public class SiteExporterImplTest {
   
   private void export(boolean exportRevisions) {
     siteExporter.exportSite("host", "domain", "webspace", exportRevisions, 
-        sitesService, new File("path"), progressListener);
+        sitesService, new File("path"), progressListener, null);
   }
   
   /**
@@ -288,9 +289,9 @@ public class SiteExporterImplTest {
     }
     
     @Override
-    public void download(AttachmentEntry attachment, File file, 
-        SitesService sitesService) {
-      downloaded.put(attachment, file);
+    public void download(AttachmentEntry attachment, String s3Bucket,
+        AmazonS3Client s3Client, String s3Key, SitesService sitesService) {
+      downloaded.put(attachment, s3Key);
     }
   }
 }

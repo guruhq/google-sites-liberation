@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.common.collect.Sets;
 import com.google.gdata.client.sites.SitesService;
 import com.google.gdata.data.sites.AttachmentEntry;
@@ -82,7 +83,7 @@ final class SiteExporterImpl implements SiteExporter {
   @Override
   public void exportSite(String host, @Nullable String domain, String webspace, 
       boolean exportRevisions, SitesService sitesService, File rootDirectory, 
-      ProgressListener progressListener) {
+      ProgressListener progressListener, String s3Bucket) {
     checkNotNull(host, "host");
     checkNotNull(webspace, "webspace");
     checkNotNull(sitesService, "sitesService");
@@ -93,6 +94,8 @@ final class SiteExporterImpl implements SiteExporter {
     EntryStore entryStore = entryStoreFactory.newEntryStore();
     URL feedUrl = UrlUtils.getFeedUrl(host, domain, webspace);
     URL siteUrl = UrlUtils.getSiteUrl(host, domain, webspace);
+    
+    AmazonS3Client s3Client = new AmazonS3Client();
     
     progressListener.setStatus("Retrieving site data (this may take a few minutes).");
     Iterable<BaseContentEntry<?>> entries = 
@@ -133,7 +136,8 @@ final class SiteExporterImpl implements SiteExporter {
         if (relativePath != null) {
           File directory = new File(rootDirectory, relativePath.getPath());
           directory.mkdirs();
-          exportPage(page, directory, entryStore, exportRevisions);
+          String s3Key = relativePath.getPath() + "/index.html";
+          exportPage(page, directory, entryStore, exportRevisions, s3Client, s3Bucket, s3Key);
           if (exportRevisions) {
             revisionsExporter.exportRevisions(page, entryStore, directory, 
                 sitesService, siteUrl);
@@ -144,7 +148,7 @@ final class SiteExporterImpl implements SiteExporter {
       for (AttachmentEntry attachment : attachments) {
         progressListener.setStatus("Downloading attachment: " 
             + attachment.getTitle().getPlainText() + '.');
-        downloadAttachment(attachment, rootDirectory, entryStore, sitesService);
+        downloadAttachment(attachment, entryStore, sitesService, s3Client, s3Bucket);
         progressListener.setProgress(((double) ++currentEntries) / totalEntries);
       }
       progressListener.setStatus("Export complete.");
@@ -155,7 +159,8 @@ final class SiteExporterImpl implements SiteExporter {
   }
   
   private void exportPage(BaseContentEntry<?> page, File directory, 
-      EntryStore entryStore, boolean revisionsExported) {
+      EntryStore entryStore, boolean revisionsExported, AmazonS3Client s3Client, 
+      String s3Bucket, String s3Key) {
     File file = new File(directory, "index.html");
     Appendable out = null;
     try {
@@ -172,18 +177,19 @@ final class SiteExporterImpl implements SiteExporter {
         }
       }
     }
+    
+    s3Client.putObject(s3Bucket, s3Key, file);
+    
   }
   
   private void downloadAttachment(AttachmentEntry attachment, 
-      File rootDirectory, EntryStore entryStore, SitesService sitesService) {
+      EntryStore entryStore, SitesService sitesService, AmazonS3Client s3Client, String s3Bucket) {
     BasePageEntry<?> parent = entryStore.getParent(attachment.getId());
     if (parent != null) {
       File relativePath = getPath(parent, entryStore);
       if (relativePath != null) {
-        File folder = new File(rootDirectory, relativePath.getPath());
-        folder.mkdirs();
-        File file = new File(folder, attachment.getTitle().getPlainText());
-        attachmentDownloader.download(attachment, file, sitesService);
+        String s3Key = relativePath.getPath() + "/" + attachment.getTitle().getPlainText();
+        attachmentDownloader.download(attachment, s3Bucket, s3Client, s3Key, sitesService);
       }
     }
   }
