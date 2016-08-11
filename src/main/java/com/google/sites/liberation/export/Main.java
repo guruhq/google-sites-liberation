@@ -49,32 +49,32 @@ import com.google.sites.liberation.util.StdOutProgressListener;
 /**
  * Processes command line arguments for exporting a site and then
  * calls SiteExporter accordingly.
- * 
+ *
  * @author bsimon@google.com (Benjamin Simon)
  */
 public class Main {
 
   private static final Logger LOGGER = Logger.getLogger(
       Main.class.getCanonicalName());
-  
+
   @Option(name="-d", usage="domain of site")
   private String domain = null;
-  
+
   @Option(name="-w", usage="webspace of site")
   private String webspace = null;
-  
+
   @Option(name="-r", usage="export revisions as well as current content")
   private boolean exportRevisions = false;
-  
+
   @Option(name="-f", usage="directory in which to export")
   private File directory = new File("");
-  
+
   @Option(name="-h", usage="host")
   private String host = "sites.google.com";
-  
+
   @Option(name="-b", usage="s3bucket", required=true)
   private String s3Bucket;
-  
+
   /**
    * Be sure to specify the name of your application. If the application name is {@code null} or
    * blank, the application will log a warning. Suggested format is "MyCompany-ProductName/1.0".
@@ -84,7 +84,7 @@ public class Main {
   /** Directory to store user credentials. */
   private static final java.io.File DATA_STORE_DIR =
       new java.io.File(System.getProperty("user.home"), ".store/GoogleSiteLiberation");
-  
+
   /**
    * Global instance of the {@link DataStoreFactory}. The best practice is to make it a single
    * globally shared instance across your application.
@@ -93,20 +93,20 @@ public class Main {
 
   /** Global instance of the HTTP transport. */
   private static HttpTransport httpTransport;
-  
+
   private static Oauth2 oauth2;
 
   /** Global instance of the JSON factory. */
   private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-  
+
   private static GoogleClientSecrets clientSecrets;
-  
+
   /** Scope Authorization. */
   private static List<String> SCOPES = Arrays
 	      .asList("https://sites.google.com/feeds");
-  
-  
-  /** Authorizes the installed application to access user's protected data. 
+
+
+  /** Authorizes the installed application to access user's protected data.
  * @throws Exception */
   private static Credential authorize() throws Exception {
     // load client secrets
@@ -122,15 +122,15 @@ public class Main {
     GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
         httpTransport, JSON_FACTORY, clientSecrets, SCOPES).setDataStoreFactory(
         dataStoreFactory).setAccessType("offline").build();
-    
-    //Loading receiver on 8080 port (you can change this if already in use) 
-    LocalServerReceiver localServerReceiver = new LocalServerReceiver.Builder().setPort( 8080 ).build(); 
-    
+
+    //Loading receiver on 8080 port (you can change this if already in use)
+    LocalServerReceiver localServerReceiver = new LocalServerReceiver.Builder().setPort( 8080 ).build();
+
     // authorize
     return new AuthorizationCodeInstalledApp(flow, localServerReceiver).authorize("user");
   }
-  
-  
+
+
   private void doMain(String[] args) {
     CmdLineParser parser = new CmdLineParser(this);
     Injector injector = Guice.createInjector(new SiteExporterModule());
@@ -143,14 +143,14 @@ public class Main {
       SitesService sitesService = new SitesService("google-sites-liberation");
       httpTransport = GoogleNetHttpTransport.newTrustedTransport();
       dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
-      
 
-      Credential credential = authorize();
-      oauth2 = new Oauth2.Builder(httpTransport, JSON_FACTORY, credential).setApplicationName(
-              APPLICATION_NAME).build();
-      
-	  sitesService.setOAuth2Credentials(credential);
-      
+
+    //   Credential credential = authorize();
+    //   oauth2 = new Oauth2.Builder(httpTransport, JSON_FACTORY, credential).setApplicationName(
+    //           APPLICATION_NAME).build();
+    //
+	  // sitesService.setOAuth2Credentials(credential);
+
       siteExporter.exportSite(host, domain, webspace, exportRevisions,
           sitesService, directory, new StdOutProgressListener(), s3Bucket);
     } catch (CmdLineException e) {
@@ -165,7 +165,7 @@ public class Main {
 	  LOGGER.log(Level.SEVERE, "Error while getting the AccesToken");
 	}
   }
-  
+
   /**
    * Exports a Site.
    */
