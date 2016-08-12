@@ -81,7 +81,7 @@ final class AttachmentDownloaderImpl implements AttachmentDownloader {
         LOGGER.log(Level.SEVERE, "S3 Error", e);
       }
       
-      inStream.close();
+      //inStream.close();
     } catch (IOException e) {
       LOGGER.log(Level.WARNING, "Error downloading attachment: " 
           + attachment.getTitle().getPlainText(), e);
