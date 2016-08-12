@@ -209,6 +209,7 @@ final class SiteExporterImpl implements SiteExporter {
       }
     }
 
+    LOGGER.log(Level.SEVERE, "Client: " + s3Client.toString());
     LOGGER.log(Level.SEVERE, "Putting file: " + s3Key);
     s3Client.putObject(s3Bucket, s3Key, file);
 
