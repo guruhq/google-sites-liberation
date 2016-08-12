@@ -65,7 +65,7 @@ final class AttachmentDownloaderImpl implements AttachmentDownloader {
       ObjectMetadata metadata = new ObjectMetadata();
       LOGGER.log(Level.SEVERE, "Putting attachment: " + s3Key);
       LOGGER.log(Level.SEVERE, "ContentLength: " + mediaSource.getContentLength());
-      metadata.setContentLength(mediaSource.getContentLength());
+      //metadata.setContentLength(mediaSource.getContentLength());
       LOGGER.log(Level.SEVERE, "ContentType: " + mediaSource.getContentType());
       metadata.setContentType(mediaSource.getContentType());
       DateTime dt = mediaSource.getLastModified();
