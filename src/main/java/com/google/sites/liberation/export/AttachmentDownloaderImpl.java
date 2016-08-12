@@ -20,16 +20,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectResult;
 import com.google.gdata.client.sites.SitesService;
-import com.google.gdata.data.DateTime;
 import com.google.gdata.data.MediaContent;
 import com.google.gdata.data.OutOfLineContent;
 import com.google.gdata.data.media.MediaSource;
@@ -63,20 +59,13 @@ final class AttachmentDownloaderImpl implements AttachmentDownloader {
       InputStream inStream = mediaSource.getInputStream();
       
       ObjectMetadata metadata = new ObjectMetadata();
-      LOGGER.log(Level.SEVERE, "Putting attachment: " + s3Key);
-      LOGGER.log(Level.SEVERE, "ContentLength: " + mediaSource.getContentLength());
-      //metadata.setContentLength(mediaSource.getContentLength());
-      LOGGER.log(Level.SEVERE, "ContentType: " + mediaSource.getContentType());
+      LOGGER.log(Level.INFO, "Putting attachment: " + s3Key);
+      if (mediaSource.getContentLength() > 0) {
+        metadata.setContentLength(mediaSource.getContentLength());
+      }
       metadata.setContentType(mediaSource.getContentType());
       
-      try {
-        LOGGER.log(Level.SEVERE, "Client: " + s3Client.toString());
-        PutObjectResult result = s3Client.putObject(s3Bucket, s3Key, inStream, metadata);
-        LOGGER.log(Level.SEVERE, "MD5: " + result.getContentMd5());
-      }
-      catch (AmazonClientException e) {
-        LOGGER.log(Level.SEVERE, "S3 Error", e);
-      }
+      s3Client.putObject(s3Bucket, s3Key, inStream, metadata);
       
       //inStream.close();
     } catch (IOException e) {
