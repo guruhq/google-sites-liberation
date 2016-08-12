@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.google.gdata.client.sites.SitesService;
@@ -70,7 +71,12 @@ final class AttachmentDownloaderImpl implements AttachmentDownloader {
       metadata.setLastModified(new Date(dt.getValue()));
       LOGGER.log(Level.SEVERE, "LMD: " + dt.getValue());
       
-      s3Client.putObject(s3Bucket, s3Key, inStream, metadata);
+      try {
+        s3Client.putObject(s3Bucket, s3Key, inStream, metadata);
+      }
+      catch (AmazonClientException e) {
+        LOGGER.log(Level.SEVERE, "S3 Error", e);
+      }
       
       inStream.close();
     } catch (IOException e) {
