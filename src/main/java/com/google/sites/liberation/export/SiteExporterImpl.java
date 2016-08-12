@@ -46,16 +46,16 @@ import com.google.sites.liberation.util.ProgressListener;
 import com.google.sites.liberation.util.UrlUtils;
 
 /**
- * Implements {@link SiteExporter} to export an entire Site 
+ * Implements {@link SiteExporter} to export an entire Site
  * to a given root folder.
- * 
+ *
  * @author bsimon@google.com (Benjamin Simon)
  */
 final class SiteExporterImpl implements SiteExporter {
-  
+
   private static final Logger LOGGER = Logger.getLogger(
       SiteExporterImpl.class.getCanonicalName());
-  
+
   private final AbsoluteLinkConverter linkConverter;
   private final AppendableFactory appendableFactory;
   private final AttachmentDownloader attachmentDownloader;
@@ -63,7 +63,7 @@ final class SiteExporterImpl implements SiteExporter {
   private final FeedProvider feedProvider;
   private final PageExporter pageExporter;
   private final RevisionsExporter revisionsExporter;
-  
+
   /**
    * Creates a new SiteExporter with the given dependencies.
    */
@@ -81,12 +81,12 @@ final class SiteExporterImpl implements SiteExporter {
     this.entryStoreFactory = checkNotNull(entryStoreFactory);
     this.feedProvider = checkNotNull(feedProvider);
     this.pageExporter = checkNotNull(pageExporter);
-    this.revisionsExporter = checkNotNull(revisionsExporter);   
+    this.revisionsExporter = checkNotNull(revisionsExporter);
   }
-  
+
   @Override
-  public void exportSite(String host, @Nullable String domain, String webspace, 
-      boolean exportRevisions, SitesService sitesService, File rootDirectory, 
+  public void exportSite(String host, @Nullable String domain, String webspace,
+      boolean exportRevisions, SitesService sitesService, File rootDirectory,
       ProgressListener progressListener, String s3Bucket, String s3Prefix) {
     checkNotNull(host, "host");
     checkNotNull(webspace, "webspace");
@@ -98,26 +98,26 @@ final class SiteExporterImpl implements SiteExporter {
     EntryStore entryStore = entryStoreFactory.newEntryStore();
     URL feedUrl = UrlUtils.getFeedUrl(host, domain, webspace);
     URL siteUrl = UrlUtils.getSiteUrl(host, domain, webspace);
-    
+
     AWSCredentialsProvider credentialsProvider = null;
     if (System.getProperty(ACCESS_KEY_SYSTEM_PROPERTY) != null) {
-      String accessKey = System.getProperty(ACCESS_KEY_SYSTEM_PROPERTY);
-      String secretKey = System.getProperty(SECRET_KEY_SYSTEM_PROPERTY);
+      final String accessKey = System.getProperty(ACCESS_KEY_SYSTEM_PROPERTY);
+      final String secretKey = System.getProperty(SECRET_KEY_SYSTEM_PROPERTY);
       credentialsProvider = new AWSCredentialsProvider() {
         @Override
         public void refresh() {
-          
+
         }
-        
+
         @Override
         public AWSCredentials getCredentials() {
           return new AWSCredentials() {
-            
+
             @Override
             public String getAWSSecretKey() {
               return secretKey;
             }
-            
+
             @Override
             public String getAWSAccessKeyId() {
               return accessKey;
@@ -127,9 +127,9 @@ final class SiteExporterImpl implements SiteExporter {
       };
     }
     AmazonS3Client s3Client = new AmazonS3Client(credentialsProvider);
-    
+
     progressListener.setStatus("Retrieving site data (this may take a few minutes).");
-    Iterable<BaseContentEntry<?>> entries = 
+    Iterable<BaseContentEntry<?>> entries =
         feedProvider.getEntries(feedUrl, sitesService);
     int num = 1;
     for (BaseContentEntry<?> entry : entries) {
@@ -155,12 +155,12 @@ final class SiteExporterImpl implements SiteExporter {
         LOGGER.log(Level.WARNING, "Error parsing entries!");
       }
     }
-    
+
     int totalEntries = pages.size() + attachments.size();
-    if (totalEntries > 0) {  
+    if (totalEntries > 0) {
       int currentEntries = 0;
       for (BaseContentEntry<?> page : pages) {
-        progressListener.setStatus("Exporting page: " 
+        progressListener.setStatus("Exporting page: "
             + page.getTitle().getPlainText() + '.');
         linkConverter.convertLinks(page, entryStore, siteUrl, false);
         File relativePath = getPath(page, entryStore);
@@ -170,14 +170,14 @@ final class SiteExporterImpl implements SiteExporter {
           String s3Key = s3Prefix + "/" + relativePath.getPath() + "/index.html";
           exportPage(page, directory, entryStore, exportRevisions, s3Client, s3Bucket, s3Key);
           if (exportRevisions) {
-            revisionsExporter.exportRevisions(page, entryStore, directory, 
+            revisionsExporter.exportRevisions(page, entryStore, directory,
                 sitesService, siteUrl);
           }
         }
         progressListener.setProgress(((double) ++currentEntries) / totalEntries);
       }
       for (AttachmentEntry attachment : attachments) {
-        progressListener.setStatus("Downloading attachment: " 
+        progressListener.setStatus("Downloading attachment: "
             + attachment.getTitle().getPlainText() + '.');
         downloadAttachment(attachment, entryStore, sitesService, s3Client, s3Bucket, s3Prefix);
         progressListener.setProgress(((double) ++currentEntries) / totalEntries);
@@ -188,9 +188,9 @@ final class SiteExporterImpl implements SiteExporter {
           + "Can you get anything from " + feedUrl.toString()+".");
     }
   }
-  
-  private void exportPage(BaseContentEntry<?> page, File directory, 
-      EntryStore entryStore, boolean revisionsExported, AmazonS3Client s3Client, 
+
+  private void exportPage(BaseContentEntry<?> page, File directory,
+      EntryStore entryStore, boolean revisionsExported, AmazonS3Client s3Client,
       String s3Bucket, String s3Key) {
     File file = new File(directory, "index.html");
     Appendable out = null;
@@ -208,13 +208,13 @@ final class SiteExporterImpl implements SiteExporter {
         }
       }
     }
-    
+
     LOGGER.log(Level.SEVERE, "Putting file: " + s3Key);
     s3Client.putObject(s3Bucket, s3Key, file);
-    
+
   }
-  
-  private void downloadAttachment(AttachmentEntry attachment, 
+
+  private void downloadAttachment(AttachmentEntry attachment,
       EntryStore entryStore, SitesService sitesService, AmazonS3Client s3Client, String s3Bucket, String s3Prefix) {
     BasePageEntry<?> parent = entryStore.getParent(attachment.getId());
     if (parent != null) {
@@ -225,9 +225,9 @@ final class SiteExporterImpl implements SiteExporter {
       }
     }
   }
-  
+
   /**
-   * Returns the site-relative folder path corresponding to the given page, or 
+   * Returns the site-relative folder path corresponding to the given page, or
    * {@code null} if any of the page's ancestors are missing.
    */
   private File getPath(BaseContentEntry<?> entry, EntryStore entryStore) {
