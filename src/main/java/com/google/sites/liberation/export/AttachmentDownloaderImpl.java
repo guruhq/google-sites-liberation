@@ -66,6 +66,7 @@ final class AttachmentDownloaderImpl implements AttachmentDownloader {
       DateTime dt = mediaSource.getLastModified();
       metadata.setLastModified(new Date(dt.getValue()));
       
+      LOGGER.log(Level.SEVERE, "Putting attachment: " + s3Key);
       s3Client.putObject(s3Bucket, s3Key, inStream, metadata);
       
       inStream.close();

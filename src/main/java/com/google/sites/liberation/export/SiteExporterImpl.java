@@ -16,6 +16,8 @@
 
 package com.google.sites.liberation.export;
 
+import static com.amazonaws.SDKGlobalConfiguration.ACCESS_KEY_SYSTEM_PROPERTY;
+import static com.amazonaws.SDKGlobalConfiguration.SECRET_KEY_SYSTEM_PROPERTY;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.sites.liberation.util.EntryType.ATTACHMENT;
 import static com.google.sites.liberation.util.EntryType.getType;
@@ -30,6 +32,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.common.collect.Sets;
 import com.google.gdata.client.sites.SitesService;
@@ -83,7 +87,7 @@ final class SiteExporterImpl implements SiteExporter {
   @Override
   public void exportSite(String host, @Nullable String domain, String webspace, 
       boolean exportRevisions, SitesService sitesService, File rootDirectory, 
-      ProgressListener progressListener, String s3Bucket) {
+      ProgressListener progressListener, String s3Bucket, String s3Prefix) {
     checkNotNull(host, "host");
     checkNotNull(webspace, "webspace");
     checkNotNull(sitesService, "sitesService");
@@ -95,7 +99,34 @@ final class SiteExporterImpl implements SiteExporter {
     URL feedUrl = UrlUtils.getFeedUrl(host, domain, webspace);
     URL siteUrl = UrlUtils.getSiteUrl(host, domain, webspace);
     
-    AmazonS3Client s3Client = new AmazonS3Client();
+    AWSCredentialsProvider credentialsProvider = null;
+    if (System.getProperty(ACCESS_KEY_SYSTEM_PROPERTY) != null) {
+      String accessKey = System.getProperty(ACCESS_KEY_SYSTEM_PROPERTY);
+      String secretKey = System.getProperty(SECRET_KEY_SYSTEM_PROPERTY);
+      credentialsProvider = new AWSCredentialsProvider() {
+        @Override
+        public void refresh() {
+          
+        }
+        
+        @Override
+        public AWSCredentials getCredentials() {
+          return new AWSCredentials() {
+            
+            @Override
+            public String getAWSSecretKey() {
+              return secretKey;
+            }
+            
+            @Override
+            public String getAWSAccessKeyId() {
+              return accessKey;
+            }
+          };
+        }
+      };
+    }
+    AmazonS3Client s3Client = new AmazonS3Client(credentialsProvider);
     
     progressListener.setStatus("Retrieving site data (this may take a few minutes).");
     Iterable<BaseContentEntry<?>> entries = 
@@ -136,7 +167,7 @@ final class SiteExporterImpl implements SiteExporter {
         if (relativePath != null) {
           File directory = new File(rootDirectory, relativePath.getPath());
           directory.mkdirs();
-          String s3Key = relativePath.getPath() + "/index.html";
+          String s3Key = s3Prefix + "/" + relativePath.getPath() + "/index.html";
           exportPage(page, directory, entryStore, exportRevisions, s3Client, s3Bucket, s3Key);
           if (exportRevisions) {
             revisionsExporter.exportRevisions(page, entryStore, directory, 
@@ -148,7 +179,7 @@ final class SiteExporterImpl implements SiteExporter {
       for (AttachmentEntry attachment : attachments) {
         progressListener.setStatus("Downloading attachment: " 
             + attachment.getTitle().getPlainText() + '.');
-        downloadAttachment(attachment, entryStore, sitesService, s3Client, s3Bucket);
+        downloadAttachment(attachment, entryStore, sitesService, s3Client, s3Bucket, s3Prefix);
         progressListener.setProgress(((double) ++currentEntries) / totalEntries);
       }
       progressListener.setStatus("Export complete.");
@@ -178,17 +209,18 @@ final class SiteExporterImpl implements SiteExporter {
       }
     }
     
+    LOGGER.log(Level.SEVERE, "Putting file: " + s3Key);
     s3Client.putObject(s3Bucket, s3Key, file);
     
   }
   
   private void downloadAttachment(AttachmentEntry attachment, 
-      EntryStore entryStore, SitesService sitesService, AmazonS3Client s3Client, String s3Bucket) {
+      EntryStore entryStore, SitesService sitesService, AmazonS3Client s3Client, String s3Bucket, String s3Prefix) {
     BasePageEntry<?> parent = entryStore.getParent(attachment.getId());
     if (parent != null) {
       File relativePath = getPath(parent, entryStore);
       if (relativePath != null) {
-        String s3Key = relativePath.getPath() + "/" + attachment.getTitle().getPlainText();
+        String s3Key = s3Prefix + "/" + relativePath.getPath() + "/" + attachment.getTitle().getPlainText();
         attachmentDownloader.download(attachment, s3Bucket, s3Client, s3Key, sitesService);
       }
     }

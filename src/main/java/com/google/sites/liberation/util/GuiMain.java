@@ -336,7 +336,7 @@ public class GuiMain {
         Injector injector = Guice.createInjector(new SiteExporterModule());
         SiteExporter siteExporter = injector.getInstance(SiteExporter.class);
         siteExporter.exportSite(host, domain, webspace, revisions,
-            sitesService, directory, new GuiProgressListener(progressBar, textArea), null);
+            sitesService, directory, new GuiProgressListener(progressBar, textArea), null, null);
       } else {
         Injector injector = Guice.createInjector(new SiteImporterModule());
         SiteImporter siteImporter = injector.getInstance(SiteImporter.class);

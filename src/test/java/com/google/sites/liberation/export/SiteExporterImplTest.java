@@ -275,7 +275,7 @@ public class SiteExporterImplTest {
   
   private void export(boolean exportRevisions) {
     siteExporter.exportSite("host", "domain", "webspace", exportRevisions, 
-        sitesService, new File("path"), progressListener, null);
+        sitesService, new File("path"), progressListener, null, null);
   }
   
   /**

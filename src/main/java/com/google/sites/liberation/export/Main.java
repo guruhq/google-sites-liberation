@@ -29,6 +29,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
+import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -75,6 +76,13 @@ public class Main {
   @Option(name="-b", usage="s3bucket", required=true)
   private String s3Bucket;
 
+  @Option(name="-p", usage="s3prefix", required=true)
+  private String s3Prefix;
+
+  @Option(name="-a", usage="oauthAccessToken", required=false)
+  private String oauthAccessToken;
+
+  
   /**
    * Be sure to specify the name of your application. If the application name is {@code null} or
    * blank, the application will log a warning. Suggested format is "MyCompany-ProductName/1.0".
@@ -144,15 +152,17 @@ public class Main {
       httpTransport = GoogleNetHttpTransport.newTrustedTransport();
       dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
 
-
-    //   Credential credential = authorize();
-    //   oauth2 = new Oauth2.Builder(httpTransport, JSON_FACTORY, credential).setApplicationName(
-    //           APPLICATION_NAME).build();
-    //
-	  // sitesService.setOAuth2Credentials(credential);
-
+      if (oauthAccessToken != null) {
+        Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod());
+        credential.setAccessToken(oauthAccessToken);
+      //   Credential credential = authorize();
+      //   oauth2 = new Oauth2.Builder(httpTransport, JSON_FACTORY, credential).setApplicationName(
+      //           APPLICATION_NAME).build();
+      //
+  	    sitesService.setOAuth2Credentials(credential);
+      }
       siteExporter.exportSite(host, domain, webspace, exportRevisions,
-          sitesService, directory, new StdOutProgressListener(), s3Bucket);
+          sitesService, directory, new StdOutProgressListener(), s3Bucket, s3Prefix);
     } catch (CmdLineException e) {
       LOGGER.log(Level.SEVERE, e.getMessage());
       parser.printUsage(System.err);
