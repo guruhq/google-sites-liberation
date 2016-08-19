@@ -99,34 +99,7 @@ final class SiteExporterImpl implements SiteExporter {
     URL feedUrl = UrlUtils.getFeedUrl(host, domain, webspace);
     URL siteUrl = UrlUtils.getSiteUrl(host, domain, webspace);
 
-    AWSCredentialsProvider credentialsProvider = null;
-    if (System.getProperty(ACCESS_KEY_SYSTEM_PROPERTY) != null) {
-      final String accessKey = System.getProperty(ACCESS_KEY_SYSTEM_PROPERTY);
-      final String secretKey = System.getProperty(SECRET_KEY_SYSTEM_PROPERTY);
-      credentialsProvider = new AWSCredentialsProvider() {
-        @Override
-        public void refresh() {
-
-        }
-
-        @Override
-        public AWSCredentials getCredentials() {
-          return new AWSCredentials() {
-
-            @Override
-            public String getAWSSecretKey() {
-              return secretKey;
-            }
-
-            @Override
-            public String getAWSAccessKeyId() {
-              return accessKey;
-            }
-          };
-        }
-      };
-    }
-    AmazonS3Client s3Client = new AmazonS3Client(credentialsProvider);
+    AmazonS3Client s3Client = new AmazonS3Client();
 
     progressListener.setStatus("Retrieving site data (this may take a few minutes).");
     Iterable<BaseContentEntry<?>> entries =
