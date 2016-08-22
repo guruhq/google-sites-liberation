@@ -16,8 +16,6 @@
 
 package com.google.sites.liberation.export;
 
-import static com.amazonaws.SDKGlobalConfiguration.ACCESS_KEY_SYSTEM_PROPERTY;
-import static com.amazonaws.SDKGlobalConfiguration.SECRET_KEY_SYSTEM_PROPERTY;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.sites.liberation.util.EntryType.ATTACHMENT;
 import static com.google.sites.liberation.util.EntryType.getType;
@@ -32,15 +30,13 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.common.collect.Sets;
 import com.google.gdata.client.sites.SitesService;
 import com.google.gdata.data.sites.AttachmentEntry;
 import com.google.gdata.data.sites.BaseContentEntry;
 import com.google.gdata.data.sites.BasePageEntry;
-import com.google.gdata.data.sites.ContentFeed;
+import com.google.gdata.data.sites.ContentEntry;
 import com.google.gdata.util.ServiceException;
 import com.google.gdata.util.common.base.Nullable;
 import com.google.inject.Inject;
@@ -104,7 +100,7 @@ final class SiteExporterImpl implements SiteExporter {
     try {
       URL siteNameUrl = UrlUtils.getFeedSiteUrl(host, domain, webspace);
       LOGGER.log(Level.INFO, "SiteUrl: " + siteNameUrl);
-      BaseContentEntry feed = sitesService.getEntry(siteNameUrl, BaseContentEntry.class);
+      ContentEntry feed = sitesService.getEntry(siteNameUrl, ContentEntry.class);
       if (feed != null) {
         LOGGER.log(Level.INFO, feed.toString());
         siteName = feed.getTitle().getPlainText();
