@@ -102,16 +102,22 @@ final class SiteExporterImpl implements SiteExporter {
     URL siteUrl = UrlUtils.getSiteUrl(host, domain, webspace);
     String siteName = null;
     try {
-      ContentFeed feed = sitesService.getFeed(UrlUtils.getFeedSiteUrl(host, domain, webspace), ContentFeed.class);
+      URL siteNameUrl = UrlUtils.getFeedSiteUrl(host, domain, webspace);
+      LOGGER.log(Level.INFO, "SiteUrl: " + siteNameUrl);
+      ContentFeed feed = sitesService.getFeed(siteNameUrl, ContentFeed.class);
       if (feed != null) {
+        LOGGER.log(Level.INFO, feed.toString());
         siteName = feed.getTitle().getPlainText();
+      }
+      else {
+        LOGGER.log(Level.SEVERE, "Feed is null");
       }
     }
     catch (IOException e) {
-      //couldn't get site name
+      LOGGER.log(Level.SEVERE, "Error getting sitename", e);
     }
     catch (ServiceException e) {
-      //couldn't get site name
+      LOGGER.log(Level.SEVERE, "Error getting sitename", e);
     }
 
     AmazonS3Client s3Client = new AmazonS3Client();
