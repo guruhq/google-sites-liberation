@@ -104,7 +104,7 @@ final class SiteExporterImpl implements SiteExporter {
     try {
       URL siteNameUrl = UrlUtils.getFeedSiteUrl(host, domain, webspace);
       LOGGER.log(Level.INFO, "SiteUrl: " + siteNameUrl);
-      ContentFeed feed = sitesService.getFeed(siteNameUrl, ContentFeed.class);
+      BaseContentEntry feed = sitesService.getEntry(siteNameUrl, BaseContentEntry.class);
       if (feed != null) {
         LOGGER.log(Level.INFO, feed.toString());
         siteName = feed.getTitle().getPlainText();
