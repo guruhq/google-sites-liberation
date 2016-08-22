@@ -40,6 +40,7 @@ import com.google.gdata.client.sites.SitesService;
 import com.google.gdata.data.sites.AttachmentEntry;
 import com.google.gdata.data.sites.BaseContentEntry;
 import com.google.gdata.data.sites.BasePageEntry;
+import com.google.gdata.data.sites.ContentFeed;
 import com.google.gdata.util.common.base.Nullable;
 import com.google.inject.Inject;
 import com.google.sites.liberation.util.ProgressListener;
@@ -85,7 +86,7 @@ final class SiteExporterImpl implements SiteExporter {
   }
 
   @Override
-  public void exportSite(String host, @Nullable String domain, String webspace,
+  public String exportSite(String host, @Nullable String domain, String webspace,
       boolean exportRevisions, SitesService sitesService, File rootDirectory,
       ProgressListener progressListener, String s3Bucket, String s3Prefix) {
     checkNotNull(host, "host");
@@ -98,6 +99,7 @@ final class SiteExporterImpl implements SiteExporter {
     EntryStore entryStore = entryStoreFactory.newEntryStore();
     URL feedUrl = UrlUtils.getFeedUrl(host, domain, webspace);
     URL siteUrl = UrlUtils.getSiteUrl(host, domain, webspace);
+    ContentFeed feed = sitesService.getFeed(feedUrl, ContentFeed.class);
 
     AmazonS3Client s3Client = new AmazonS3Client();
 
@@ -160,6 +162,7 @@ final class SiteExporterImpl implements SiteExporter {
       progressListener.setStatus("No data returned. "
           + "Can you get anything from " + feedUrl.toString()+".");
     }
+    return feed.getTitle().getPlainText();
   }
 
   private void exportPage(BaseContentEntry<?> page, File directory,
