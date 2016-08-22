@@ -102,7 +102,7 @@ final class SiteExporterImpl implements SiteExporter {
     URL siteUrl = UrlUtils.getSiteUrl(host, domain, webspace);
     String siteName = null;
     try {
-      ContentFeed feed = sitesService.getFeed(feedUrl, ContentFeed.class);
+      ContentFeed feed = sitesService.getFeed(UrlUtils.getFeedSiteUrl(host, domain, webspace), ContentFeed.class);
       if (feed != null) {
         siteName = feed.getTitle().getPlainText();
       }

@@ -67,4 +67,20 @@ public class UrlUtils {
       throw new RuntimeException(e);
     }
   }
+  
+  public static URL getFeedSiteUrl(String host, @Nullable String domain,
+      String webspace) {
+    try {
+      if (domain == null) {
+        return new URL("https://" + host + "/feeds/site/" + webspace);
+      } else {
+        return new URL("https://" + host + "/feeds/site/" + domain + "/" 
+            + webspace);
+      }
+    } catch (MalformedURLException e) {
+      LOGGER.log(Level.WARNING, "Invalid host, domain, or webspace!");
+      throw new RuntimeException(e);
+    }
+  }
+
 }
