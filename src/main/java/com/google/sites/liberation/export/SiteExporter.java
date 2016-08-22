@@ -42,7 +42,7 @@ public interface SiteExporter {
    * @param rootDirectory directory in which to export
    * @param progressListener ProgressListener to monitor progress on the export
    */
-  void exportSite(String host, @Nullable String domain, String webspace, 
+  String exportSite(String host, @Nullable String domain, String webspace, 
       boolean exportRevisions, SitesService sitesService, File rootDirectory, 
       ProgressListener progressListener, String s3Bucket, String s3Prefix);
 }

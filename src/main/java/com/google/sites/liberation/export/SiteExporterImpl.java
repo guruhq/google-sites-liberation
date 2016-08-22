@@ -41,6 +41,7 @@ import com.google.gdata.data.sites.AttachmentEntry;
 import com.google.gdata.data.sites.BaseContentEntry;
 import com.google.gdata.data.sites.BasePageEntry;
 import com.google.gdata.data.sites.ContentFeed;
+import com.google.gdata.util.ServiceException;
 import com.google.gdata.util.common.base.Nullable;
 import com.google.inject.Inject;
 import com.google.sites.liberation.util.ProgressListener;
@@ -99,7 +100,19 @@ final class SiteExporterImpl implements SiteExporter {
     EntryStore entryStore = entryStoreFactory.newEntryStore();
     URL feedUrl = UrlUtils.getFeedUrl(host, domain, webspace);
     URL siteUrl = UrlUtils.getSiteUrl(host, domain, webspace);
-    ContentFeed feed = sitesService.getFeed(feedUrl, ContentFeed.class);
+    String siteName = null;
+    try {
+      ContentFeed feed = sitesService.getFeed(feedUrl, ContentFeed.class);
+      if (feed != null) {
+        siteName = feed.getTitle().getPlainText();
+      }
+    }
+    catch (IOException e) {
+      //couldn't get site name
+    }
+    catch (ServiceException e) {
+      //couldn't get site name
+    }
 
     AmazonS3Client s3Client = new AmazonS3Client();
 
@@ -162,7 +175,7 @@ final class SiteExporterImpl implements SiteExporter {
       progressListener.setStatus("No data returned. "
           + "Can you get anything from " + feedUrl.toString()+".");
     }
-    return feed.getTitle().getPlainText();
+    return siteName;
   }
 
   private void exportPage(BaseContentEntry<?> page, File directory,
